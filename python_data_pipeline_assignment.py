@@ -29,18 +29,23 @@ folder = "jsons"
 
 if folder not in os.listdir():
     os.mkdir(folder)
+    
+import requests 
 
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket("arn:aws:s3:eu-north-1:705545259095:accesspoint/bizware")
-    parsed = []
+def download_url(url, save_path, chunk_size=128):
+    r = requests.get(url, stream=True)
+    with open(save_path, 'wb') as fd:
+        for chunk in r.iter_content(chunk_size=chunk_size):
+            fd.write(chunk)
 
-    for obj in bucket.objects.all():
-        bucket.download_file(obj.key, obj.key)
-        print(f"downloaded {obj.key}")
-        if ".zip" in obj.key:
-            with zipfile.ZipFile(obj.key, 'r') as zip_ref:
-                zip_ref.extractall()
-                print(f"extracted {obj.key}")
+            
+url = "https://training-demo-data.s3.eu-north-1.amazonaws.com/jsons.zip"
+file = "jsons.zip"
+download_url(url, file)
+
+with zipfile.ZipFile(file, 'r') as zip_ref:
+    zip_ref.extractall()
+    print(f"extracted {file}")
 
 # now the task is to parse the json files and collect 
 # them into a pandas df. 
